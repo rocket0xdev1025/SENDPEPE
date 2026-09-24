@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#c0f801">
+  <meta name="description" content="JOLLY — Jollybot">
+  <title>JOLLY — Jollybot</title>
+  <link rel="icon" type="image/png" href="favicon.jpg">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b0d09;
+      --ink: #f6f2dc;
+      --accent: #c0f801;
+      --accent2: #4cafff;
+      --surface: #1a1d16;
+      --muted: #a6a995;
+      --wood: #7e4f24;
+      --line: rgba(246, 242, 220, .32);
+      --display: "Anton", Impact, sans-serif;
+      --mono: "IBM Plex Mono", ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body {
+      margin: 0;
+      min-width: 320px;
+      overflow-x: hidden;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: var(--mono);
+      cursor: none;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      opacity: .16;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.36'/%3E%3C/svg%3E");
+      mix-blend-mode: soft-light;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    ::selection { color: #0b0d09; background: var(--accent); }
+
+    .cursor-dot, .cursor-ring {
+      position: fixed;
+      z-index: 2000;
+      top: 0; left: 0;
+      pointer-events: none;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .cursor-dot { width: 5px; height: 5px; background: red; }
+    .cursor-ring {
+      width: 30px; height: 30px;
+      border: 1px solid red;
+      transition: width .2s, height .2s, background .2s, border-color .2s;
+    }
+    body.cursor-hover .cursor-ring {
+      width: 54px; height: 54px;
+      background: rgba(185,255,53,.12);
+      border-color: var(--ink);
+    }
+
+    .micro-nav {
+      position: fixed;
+      z-index: 300;
+      top: 18px;
+      left: 20px;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      mix-blend-mode: difference;
+    }
+    .micro-nav a {
+      padding: 6px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      border-left: 1px solid currentColor;
+      transition: letter-spacing .2s, color .2s;
+    }
+    .micro-nav a:hover, .micro-nav a:focus-visible { color: var(--accent); letter-spacing: .24em; }
+    .micro-nav .nav-buy { background: var(--ink); color: var(--bg); mix-blend-mode: normal; }
+
+    .side-telegram {
+      position: fixed;
+      z-index: 250;
+      right: 0;
+      top: 45%;
+      padding: 14px 8px;
+      writing-mode: vertical-rl;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .2em;
+      color: var(--bg);
+      background: var(--accent2);
+      border: 2px solid var(--bg);
+      box-shadow: -5px 5px 0 var(--ink);
+      transition: padding .2s, background .2s;
+    }
+    .side-telegram:hover { padding-right: 14px; background: var(--accent); }
+    .side-telegram:active { transform: translate(0, 4px); box-shadow: -2px 2px 0 var(--ink); }
+
+    .hero-scroll { height: 260vh; position: relative; background: var(--accent); }
+    .hero {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      min-height: 650px;
+      overflow: hidden;
+      color: #0b0d09;
+      background:
+        radial-gradient(circle at 72% 38%, rgba(255,255,255,.55), transparent 27%),
+        linear-gradient(122deg, #e7ff9d 0%, var(--accent) 50%, #65cf13 100%);
+      isolation: isolate;
+    }
+    .hero-grid {
+      position: absolute; inset: 0;
+      opacity: .18;
+      background-image: linear-gradient(#0b0d09 1px, transparent 1px), linear-gradient(90deg, #0b0d09 1px, transparent 1px);
+      background-size: 7vw 7vw;
+      transform: scale(1.15);
+    }
+    .hero-word {
+      position: absolute;
+      left: -1.5vw;
+      top: 44%;
+      z-index: 1;
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(13rem, 31vw, 40rem);
+      line-height: .68;
+      letter-spacing: -.055em;
+      white-space: nowrap;
+      color: transparent;
+      -webkit-text-stroke: clamp(2px,.32vw,6px) #0b0d09;
+      transform: translateY(-50%) scaleX(.98);
+      transform-origin: center;
+      will-change: transform;
+    }
+    .hero-word::after {
+      content: "JOLLY";
+      position: absolute; inset: 0;
+      color: rgba(11,13,9,.06);
+      -webkit-text-stroke: 0;
+      transform: translate(1.1vw, 1.1vw);
+    }
+    .hero-portrait {
+      position: absolute;
+      z-index: 3;
+      left: 50%;
+      bottom: -15vh;
+      width: min(74vw, 970px);
+      height: 112vh;
+      object-fit: cover;
+      object-position: 50% 33%;
+      clip-path: polygon(9% 0, 94% 4%, 100% 91%, 66% 100%, 3% 96%, 0 13%);
+      transform: translateX(-38%) scale(1.03);
+      filter: contrast(1.08) saturate(.85) drop-shadow(28px 28px 0 rgba(11,13,9,.24));
+      will-change: transform, filter;
+      opacity: 0;
+      animation: portrait-in 1s .25s cubic-bezier(.2,.8,.2,1) forwards;
+    }
+    @keyframes portrait-in { to { opacity: 1; } }
+    .hero-kicker {
+      position: absolute;
+      z-index: 5;
+      left: 5vw;
+      top: 14vh;
+      width: min(370px, 31vw);
+      padding-top: 10px;
+      border-top: 4px solid #0b0d09;
+      font-size: clamp(.7rem, 1.05vw, .92rem);
+      font-weight: 700;
+      line-height: 1.45;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(16px) rotate(-1.5deg);
+      animation: reveal .55s .08s forwards;
+    }
+    @keyframes reveal { to { opacity: 1; transform: translateY(0) rotate(-1.5deg); } }
+    .hero-line {
+      position: absolute;
+      z-index: 6;
+      right: 3.5vw;
+      top: 13vh;
+      width: min(240px, 19vw);
+      font-family: var(--display);
+      font-size: clamp(1.9rem, 4vw, 4.6rem);
+      line-height: .9;
+      text-align: right;
+      text-transform: uppercase;
+      transform: rotate(2deg);
+      opacity: 0;
+      animation: phrase-in .65s .8s forwards;
+    }
+    @keyframes phrase-in { to { opacity: 1; transform: rotate(2deg) translateY(0); } }
+    .hero-meta {
+      position: absolute;
+      z-index: 5;
+      left: 3vw;
+      bottom: 4vh;
+      display: grid;
+      gap: 5px;
+      font-size: 10px;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+    }
+    .hero-meta strong { font-size: 13px; }
+    .hero-scene {
+      position: absolute;
+      right: 2.5vw;
+      bottom: 3vh;
+      z-index: 5;
+      font-size: 10px;
+      letter-spacing: .2em;
+      text-transform: uppercase;
+    }
+    .buy-ticket {
+      position: absolute;
+      z-index: 8;
+      right: 6vw;
+      bottom: 12vh;
+      display: grid;
+      place-items: center;
+      width: clamp(160px, 16vw, 230px);
+      min-height: 82px;
+      padding: 16px 22px;
+      font-family: var(--display);
+      font-size: clamp(2rem, 3.1vw, 3.8rem);
+      line-height: 1;
+      letter-spacing: .02em;
+      color: var(--ink);
+      background: #0b0d09;
+      border: 3px solid #0b0d09;
+      clip-path: polygon(0 12%, 8% 12%, 8% 0, 92% 0, 92% 12%, 100% 12%, 100% 88%, 92% 88%, 92% 100%, 8% 100%, 8% 88%, 0 88%);
+      box-shadow: 11px 11px 0 #f6f2dc;
+      transform: rotate(-4deg);
+      opacity: 0;
+      animation: cta-in .55s 1.25s forwards;
+      transition: transform .18s, box-shadow .18s, color .18s, background .18s;
+    }
+    @keyframes cta-in { to { opacity: 1; } }
+    .buy-ticket small { display: block; font: 700 9px/1 var(--mono); letter-spacing: .2em; margin-bottom: 6px; }
+    .buy-ticket:hover, .buy-ticket:focus-visible {
+      color: #0b0d09; background: var(--ink);
+      transform: rotate(-4deg) translate(-5px,-5px) scale(1.04);
+      box-shadow: 17px 17px 0 #0b0d09;
+    }
+    .buy-ticket:active { transform: rotate(-4deg) translate(5px,5px); box-shadow: 2px 2px 0 #0b0d09; }
+
+    .ticker {
+      position: relative;
+      z-index: 20;
+      overflow: hidden;
+      border-block: 2px solid var(--ink);
+      color: var(--ink);
+      background: #0b0d09;
+      transform: rotate(-.7deg) scale(1.02);
+    }
+    .ticker-track { display: flex; width: max-content; animation: marquee 27s linear infinite; }
+    .ticker-line {
+      flex: none;
+      padding: 13px 0;
+      font-family: var(--display);
+      font-size: clamp(1.3rem,2.2vw,2.5rem);
+      letter-spacing: .08em;
+      white-space: nowrap;
+    }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+
+    .about-scroll { position: relative; height: 260vh; background: #d7cfb3; }
+    .about {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      min-height: 700px;
+      overflow: hidden;
+      color: #0b0d09;
+      background:
+        linear-gradient(105deg, transparent 0 61%, rgba(126,79,36,.16) 61%),
+        repeating-linear-gradient(0deg, rgba(11,13,9,.03) 0 1px, transparent 1px 7px),
+        #d7cfb3;
+    }
+    .about-index {
+      position: absolute; left: 4vw; top: 12vh;
+      font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+      transform: rotate(-90deg) translateX(-100%); transform-origin: top left;
+    }
+    .about-title {
+      position: absolute; z-index: 3;
+      left: 8vw; top: 8vh;
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(5rem, 13vw, 14rem);
+      line-height: .78;
+      letter-spacing: -.035em;
+      text-transform: uppercase;
+      max-width: 70vw;
+    }
+    .about-title .outline { color: transparent; -webkit-text-stroke: 2px #0b0d09; }
+    .evidence-photo {
+      position: absolute;
+      z-index: 2;
+      right: -4vw;
+      bottom: -9vh;
+      width: min(66vw, 900px);
+      height: 82vh;
+      object-fit: cover;
+      object-position: 58% 50%;
+      border: 8px solid var(--ink);
+      box-shadow: -22px 26px 0 var(--wood);
+      transform: rotate(2.8deg) translate3d(0, 6%, 0);
+      will-change: transform;
+    }
+    .evidence-tag {
+      position: absolute; z-index: 6;
+      right: 5vw; top: 10vh;
+      padding: 9px 14px;
+      color: var(--ink); background: #bd2f23;
+      font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase;
+      transform: rotate(5deg);
+      box-shadow: 6px 6px 0 #0b0d09;
+    }
+    .story-note {
+      position: absolute; z-index: 7;
+      left: 8vw; bottom: 7vh;
+      width: min(480px, 40vw);
+      padding: 26px 28px 28px;
+      background: #f7f0d1;
+      border: 2px solid #0b0d09;
+      box-shadow: 12px 12px 0 #0b0d09;
+      transform: rotate(-2deg);
+    }
+    .story-note::before {
+      content: "Jollybot";
+      display: block; margin-bottom: 14px;
+      font-size: 9px; font-weight: 700; letter-spacing: .17em;
+    }
+    .story-note p { margin: 0; font-size: clamp(.8rem, 1vw, 1rem); line-height: 1.65; }
+    .traits { position: absolute; z-index: 8; inset: 0; pointer-events: none; }
+    .trait {
+      position: absolute;
+      max-width: 220px;
+      padding: 10px 12px;
+      color: var(--ink);
+      background: #0b0d09;
+      font-size: 10px;
+      line-height: 1.45;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      opacity: 0;
+      transform: translateY(24px) rotate(var(--r));
+      transition: opacity .45s, transform .45s;
+    }
+    .trait.on { opacity: 1; transform: translateY(0) rotate(var(--r)); }
+    .trait b { color: var(--accent); }
+    .trait-1 { --r:-5deg; left: 47%; top: 27%; }
+    .trait-2 { --r:3deg; left: 56%; top: 48%; }
+    .trait-3 { --r:-2deg; right: 5%; top: 33%; }
+    .trait-4 { --r:4deg; left: 41%; bottom: 8%; }
+    .marker-arrow {
+      position: absolute; z-index: 5; left: 40%; top: 41%;
+      width: 10vw; height: 5vw; min-width: 90px;
+      border-top: 5px solid #bd2f23;
+      transform: rotate(12deg);
+    }
+    .marker-arrow::after { content: ""; position: absolute; right: -2px; top: -11px; border: 8px solid transparent; border-left: 18px solid #bd2f23; }
+
+    .flow-scroll { height: 310vh; position: relative; background: #61b9ff; }
+    .flow {
+      position: sticky; top: 0;
+      height: 100vh; min-height: 660px;
+      overflow: hidden;
+      color: #07101a;
+      background: #61b9ff;
+      isolation: isolate;
+    }
+    .sky-poster {
+      position: absolute; inset: -7%; width: 114%; height: 114%; object-fit: cover;
+      opacity: .42; filter: saturate(.86) contrast(1.05);
+      transform: scale(1.06); will-change: transform;
+    }
+    .flow-wash { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(223,242,255,.93) 0 22%, rgba(76,175,255,.15) 50%, rgba(223,242,255,.78)); }
+    .flow-title {
+      position: absolute; z-index: 3;
+      left: 4vw; top: 8vh;
+      margin: 0; max-width: 25vw;
+      font-family: var(--display);
+      font-size: clamp(4rem,9vw,10rem);
+      line-height: .78;
+      text-transform: uppercase;
+      letter-spacing: -.03em;
+    }
+    .flow-title small { display: block; margin-top: 18px; font: 700 10px/1.5 var(--mono); letter-spacing: .18em; }
+    .migration-map {
+      position: absolute; z-index: 4;
+      left: 25vw; top: 8vh;
+      width: 125vw; height: 82vh;
+      transform: translate3d(0,0,0);
+      will-change: transform;
+    }
+    .flight-line {
+      position: absolute; left: 2%; right: 2%; top: 51%; height: 4px;
+      background: repeating-linear-gradient(90deg, #07101a 0 18px, transparent 18px 29px);
+      transform: rotate(-6deg);
+      transform-origin: left center;
+    }
+    .flight-line::before, .flight-line::after { content: ""; position: absolute; border: 3px solid #07101a; border-radius: 50%; }
+    .flight-line::before { width: 22vw; height: 22vw; left: 17%; top: -8vw; border-right-color: transparent; }
+    .flight-line::after { width: 13vw; height: 13vw; right: 19%; top: -11vw; border-left-color: transparent; }
+    .stage {
+      position: absolute;
+      width: 250px;
+      padding: 15px 17px 17px;
+      color: #07101a;
+      background: rgba(247,240,209,.95);
+      border: 3px solid #07101a;
+      box-shadow: 10px 10px 0 rgba(7,16,26,.9);
+      clip-path: polygon(0 0, 93% 0, 100% 14%, 100% 100%, 8% 100%, 0 88%);
+    }
+    .stage b { display: block; font-family: var(--display); font-size: 2rem; text-transform: uppercase; }
+    .stage span { display: block; margin-top: 7px; font-size: 11px; font-weight: 600; line-height: 1.45; text-transform: uppercase; }
+    .stage em { position: absolute; right: 9px; top: 7px; font-style: normal; font-size: 9px; }
+    .stage-1 { left: 3vw; top: 48%; transform: rotate(-6deg); }
+    .stage-2 { left: 35vw; top: 21%; transform: rotate(4deg); background: var(--accent); }
+    .stage-3 { left: 67vw; top: 57%; transform: rotate(-3deg); background: #0b0d09; color: var(--ink); }
+    .stage-4 { left: 99vw; top: 30%; transform: rotate(5deg); background: #bd2f23; color: var(--ink); }
+    .map-bird {
+      position: absolute; z-index: 5;
+      left: 7vw; top: 28%;
+      width: clamp(100px, 13vw, 180px);
+      filter: grayscale(1) contrast(1.3) drop-shadow(9px 9px 0 rgba(7,16,26,.3));
+      clip-path: circle(48%);
+      transform: rotate(-8deg);
+    }
+    .flow-counter {
+      position: absolute; z-index: 6; right: 3vw; bottom: 3vh;
+      display: flex; align-items: baseline; gap: 10px;
+      font-family: var(--display); font-size: clamp(3.5rem,7vw,7rem);
+    }
+    .flow-counter small { font: 700 10px var(--mono); letter-spacing: .2em; }
+
+    .chart-section {
+      position: relative;
+      padding: 13vh 5vw 8vh;
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 80% 20%, rgba(185,255,53,.13), transparent 28%),
+        repeating-linear-gradient(90deg, transparent 0 59px, rgba(185,255,53,.025) 60px),
+        #0b0d09;
+    }
+    .chart-heading {
+      position: relative; z-index: 3;
+      display: grid; grid-template-columns: 1fr auto; align-items: end;
+      margin-bottom: -12px;
+    }
+    .chart-heading h2 {
+      margin: 0;
+      font-family: var(--display);
+      font-size: clamp(5rem,14vw,15rem);
+      line-height: .78;
+      letter-spacing: -.04em;
+      text-transform: uppercase;
+      color: var(--ink);
+    }
+    .live-badge {
+      margin: 0 1vw 26px 0;
+      padding: 8px 12px;
+      color: #07101a;
+      background: var(--accent);
+      font-size: 11px; font-weight: 700; letter-spacing: .2em;
+      box-shadow: 6px 6px 0 #4b641a;
+      animation: live-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes live-pulse { 50% { filter: brightness(1.2); transform: translateY(-2px); } }
+    .terminal-shell {
+      position: relative;
+      z-index: 4;
+      max-width: 1380px;
+      margin: 0 auto;
+      padding: 42px 28px 28px;
+      background: linear-gradient(135deg, #292c25, #11130f 45%, #252a1f);
+      border: 3px solid #626957;
+      box-shadow: 28px 34px 0 #050604, 0 0 55px rgba(185,255,53,.12);
+      clip-path: polygon(0 26px, 26px 0, calc(100% - 42px) 0, 100% 42px, 100% calc(100% - 22px), calc(100% - 22px) 100%, 18px 100%, 0 calc(100% - 18px));
+    }
+    .terminal-top {
+      position: absolute; top: 11px; left: 30px; right: 30px;
+      display: flex; justify-content: space-between;
+      color: var(--accent); font-size: 9px; letter-spacing: .16em; text-transform: uppercase;
+    }
+    .terminal-top span:last-child { color: var(--muted); }
+    .terminal-screen { position: relative; overflow: hidden; border: 3px solid #050604; background: #050604; }
+    .terminal-screen::before {
+      content: ""; position: absolute; z-index: 4; inset: 0; pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,.04) 0 1px, transparent 1px 4px);
+      mix-blend-mode: overlay;
+    }
+    .terminal-screen::after {
+      content: ""; position: absolute; z-index: 5; inset: 0; pointer-events: none;
+      box-shadow: inset 0 0 50px rgba(0,0,0,.65);
+    }
+    .terminal-screen iframe { display: block; width: 100%; height: 650px; border: 0; background: #111; }
+    .screw { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: #070806; border: 2px solid #777f69; }
+    .screw::after { content: ""; position: absolute; width: 7px; height: 1px; background: #777f69; top: 3px; left: 1px; transform: rotate(-20deg); }
+    .s1 { left: 8px; top: 9px; } .s2 { right: 8px; top: 9px; } .s3 { left: 8px; bottom: 8px; } .s4 { right: 8px; bottom: 8px; }
+    .chart-controls {
+      display: flex; align-items: center; justify-content: space-between; gap: 18px;
+      max-width: 1380px; margin: 38px auto 0;
+    }
+    .dex-control {
+      display: inline-flex; align-items: center; gap: 14px;
+      min-height: 48px; padding: 11px 16px;
+      color: var(--accent); border: 1px solid var(--accent); background: transparent;
+      font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+      clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+      transition: color .2s, background .2s, filter .2s;
+    }
+    .dex-control::before { content: ">"; }
+    .dex-control:hover { color: #07101a; background: var(--accent); filter: drop-shadow(0 0 13px var(--accent)); }
+    .dex-control:active { filter: none; transform: scale(.98); }
+    .chart-note { max-width: 420px; color: var(--muted); font-size: 10px; line-height: 1.5; text-align: right; text-transform: uppercase; }
+
+    .end-scene {
+      position: relative;
+      min-height: 65vh;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #0b0d09;
+      background: var(--accent);
+    }
+    .end-word {
+      font-family: var(--display);
+      font-size: clamp(8rem,28vw,30rem);
+      line-height: .72;
+      letter-spacing: -.05em;
+      transform: rotate(-3deg);
+    }
+    .x-stamp {
+      position: absolute;
+      width: 150px; aspect-ratio: 1;
+      display: grid; place-items: center;
+      border: 5px double #0b0d09;
+      border-radius: 50%;
+      font-family: var(--display); font-size: 1.7rem; text-align: center;
+      text-transform: uppercase;
+      transform: rotate(10deg);
+      transition: color .25s, background .25s;
+    }
+    .x-stamp::before { content: "FOLLOW THE Jollybot • FOLLOW THE Jollybot •"; position: absolute; inset: 9px; border: 1px dashed #0b0d09; border-radius: 50%; font: 700 8px/1 var(--mono); letter-spacing: .08em; padding: 16px; }
+    .x-stamp:hover { color: var(--accent); background: #0b0d09; animation: stamp-wobble .45s ease-in-out; }
+    @keyframes stamp-wobble { 35% { transform: rotate(-5deg) scale(1.07); } 70% { transform: rotate(14deg) scale(1.03); } }
+    .end-caption { position: absolute; left: 3vw; bottom: 3vh; font-size: 10px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; }
+    .footer-line { position: absolute; right: 3vw; bottom: 3vh; font-size: 9px; text-align: right; text-transform: uppercase; }
+
+    .reveal-block { opacity: 0; transform: translateY(40px) rotate(1deg); transition: opacity .7s, transform .7s cubic-bezier(.2,.8,.2,1); }
+    .reveal-block.visible { opacity: 1; transform: translateY(0) rotate(0); }
+    :focus-visible { outline: 3px solid var(--accent2); outline-offset: 5px; }
+
+    @media (max-width: 900px) {
+      body { cursor: auto; }
+      .cursor-dot, .cursor-ring { display: none; }
+      .micro-nav { left: 8px; right: 8px; justify-content: center; background: rgba(11,13,9,.82); padding: 4px; mix-blend-mode: normal; }
+      .micro-nav a { color: var(--ink); font-size: 8px; padding: 6px; }
+      .micro-nav a:nth-child(5), .micro-nav a:nth-child(6) { display: none; }
+      .side-telegram { top: 58%; }
+      .hero-scroll { height: 190vh; }
+      .hero { min-height: 560px; }
+      .hero-word { top: 31%; font-size: clamp(10rem, 47vw, 18rem); left: -4vw; }
+      .hero-portrait { width: 112vw; height: 78vh; left: 44%; bottom: -6vh; transform: translateX(-45%); object-position: 50% 38%; }
+      .hero-kicker { top: 12vh; left: 5vw; width: 50vw; }
+      .hero-line { top: 11vh; right: 5vw; width: 32vw; font-size: clamp(1.8rem,7vw,3.4rem); }
+      .buy-ticket { right: 7vw; bottom: 8vh; width: 176px; min-height: 72px; font-size: 2.2rem; }
+      .hero-meta { bottom: 2vh; }
+      .about-scroll { height: 205vh; }
+      .about { min-height: 640px; }
+      .about-title { left: 5vw; top: 10vh; font-size: clamp(4.5rem,18vw,9rem); max-width: 92vw; }
+      .evidence-photo { right: -24vw; bottom: -2vh; width: 100vw; height: 66vh; object-position: 53% 50%; }
+      .story-note { left: 5vw; bottom: 5vh; width: 54vw; padding: 18px; }
+      .traits { display: none; }
+      .evidence-tag { top: 32vh; right: 5vw; }
+      .marker-arrow { display: none; }
+      .flow-scroll { height: 250vh; }
+      .flow-title { left: 5vw; top: 11vh; max-width: 46vw; font-size: clamp(4rem,15vw,8rem); }
+      .migration-map { left: 42vw; top: 12vh; width: 210vw; height: 76vh; }
+      .stage { width: 210px; }
+      .stage-1 { left: 3vw; }.stage-2 { left: 51vw; }.stage-3 { left: 102vw; }.stage-4 { left: 153vw; }
+      .chart-section { padding: 14vh 3vw 8vh; }
+      .chart-heading { margin-bottom: 0; }
+      .chart-heading h2 { font-size: clamp(4rem,16vw,8rem); }
+      .terminal-shell { padding: 38px 14px 18px; box-shadow: 12px 16px 0 #050604; }
+      .terminal-screen iframe { height: 560px; }
+      .chart-note { display: none; }
+      .end-scene { min-height: 55vh; }
+    }
+
+    @media (max-width: 560px) {
+      .micro-nav a { letter-spacing: .07em; }
+      .hero-line { top: 16vh; }
+      .hero-kicker { width: 58vw; font-size: .65rem; }
+      .hero-portrait { width: 124vw; height: 72vh; bottom: -4vh; }
+      .hero-word { top: 34%; }
+      .hero-meta { display: none; }
+      .hero-scene { bottom: 1.5vh; }
+      .about-title { top: 12vh; }
+      .evidence-photo { right: -36vw; width: 126vw; height: 62vh; }
+      .story-note { width: 76vw; left: 6vw; bottom: 4vh; padding: 15px; }
+      .story-note p { font-size: .72rem; line-height: 1.5; }
+      .evidence-tag { top: 31vh; font-size: 9px; }
+      .flow-title { max-width: 70vw; }
+      .flow-title small { font-size: 8px; }
+      .migration-map { left: 55vw; width: 260vw; }
+      .stage-1 { left: 3vw; }.stage-2 { left: 64vw; }.stage-3 { left: 127vw; }.stage-4 { left: 190vw; }
+      .flow-counter small { display: none; }
+      .terminal-screen iframe { height: 500px; }
+      .terminal-top span:last-child { display: none; }
+      .chart-controls { align-items: flex-start; }
+      .x-stamp { width: 128px; }
+      .end-caption { max-width: 45vw; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .hero-scroll, .about-scroll, .flow-scroll { height: auto; }
+      .hero, .about, .flow { position: relative; }
+      .hero-portrait, .hero-word, .evidence-photo, .migration-map, .sky-poster { transform: none !important; }
+      .hero-portrait { transform: translateX(-42%) !important; }
+      .trait, .reveal-block { opacity: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="cursor-dot" aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <nav class="micro-nav" aria-label="Primary navigation">
+    <a class="nav-buy" href="https://app.uniswap.org/swap?inputCurrency=eth&outputCurrency=0x21fa4911fdd187d72e84e0e9db13f00383229e7f&chain=robinhood" target="_blank" rel="noopener noreferrer">Buy</a>
+    <a href="#about">About</a>
+    <a href="#flow">Flow</a>
+    <a href="#chart">Chart</a>
+    <a href="https://x.com/JollyOnRBH" target="_blank" rel="noopener noreferrer">X</a>
+    <!-- <a href="https://t.me/JollyOnRBH" target="_blank" rel="noopener noreferrer">Telegram</a> -->
+  </nav>
+  <a class="side-telegram interactive" href="https://x.com/JollyOnRBH" target="_blank" rel="noopener noreferrer" aria-label="Open JOLLY X">X / TWITTER</a>
+  <header class="hero-scroll" data-scene="hero">
+    <div class="hero">
+      <div class="hero-grid" aria-hidden="true"></div>
+      <p class="hero-kicker">Unlicensed Bot. Unscheduled signal.<br>Field file R–00D / eyes still open.</p>
+      <p class="hero-line">I KEEP<br>ROBINHOOD.</p>
+      <div class="hero-word" aria-label="JOLLY">JOLLY</div>
+      <img class="hero-portrait" src="images/1.png" alt="JOLLY, a wide-eyed black raven against an acid green field">
+      <a class="buy-ticket interactive" href="https://app.uniswap.org/swap?inputCurrency=eth&outputCurrency=0x21fa4911fdd187d72e84e0e9db13f00383229e7f&chain=robinhood" target="_blank" rel="noopener noreferrer">
+        <span><small>ADMIT ONE BAD IDEA</small>BUY JOLLY</span>
+      </a>
+      <div class="hero-meta"><strong>STATUS: STARING</strong><span>SPECIES: UNCOOPERATIVE</span><span>ALTITUDE: PENDING</span></div>
+      <span class="hero-scene">Scene 01 / The sighting</span>
+    </div>
+  </header>
+
+  <div class="ticker" aria-label="JOLLY signal ticker">
+    <div class="ticker-track">
+      <div class="ticker-line">JOLLY — SIGNAL ACTIVE — THE WARDROBE IS OPEN — DO NOT LOOK AWAY — JOLLY — </div>
+      <div class="ticker-line" aria-hidden="true">JOLLY — SIGNAL ACTIVE — THE WARDROBE IS OPEN — DO NOT LOOK AWAY — JOLLY — </div>
+    </div>
+  </div>
+
+  <main>
+    <section class="about-scroll" id="about" data-scene="about" aria-labelledby="about-title">
+      <div class="about">
+        <span class="about-index">Scene 02 / confiscated wardrobe</span>
+        <h2 class="about-title" id="about-title">Jollybot  <br><span class="outline">of Robinhood</span></h2>
+        <img class="evidence-photo" src="images/2.png" loading="lazy" alt="JOLLY choosing spare raven cash from a wooden wardrobe">
+        <span class="evidence-tag">Evidence: too much ROBINHOOD</span>
+        <div class="marker-arrow" aria-hidden="true"></div>
+        <div class="story-note reveal-block">
+          <p>Jollybot is The face of Muse
+</p>
+        </div>
+        <div class="traits" aria-label="JOLLY character notes">
+          <span class="trait trait-1"><b>Eyes:</b> permanently receiving</span>
+          <span class="trait trait-2"><b>Temper:</b> quiet, then airborne</span>
+          <span class="trait trait-3"><b>Wardrobe:</b> suspiciously feathered</span>
+          <span class="trait trait-4"><b>Plan:</b> no plan survives the Bot</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="flow-scroll" id="flow" data-scene="flow" aria-labelledby="flow-title">
+      <div class="flow">
+        <img class="sky-poster" src="images/3.png" loading="lazy" alt="JOLLY testing oversized black cash in a bright open sky">
+        <div class="flow-wash" aria-hidden="true"></div>
+        <h2 class="flow-title" id="flow-title">Flight<br>path<small>Not a roadmap. Birds refuse roads.</small></h2>
+        <div class="migration-map" aria-label="JOLLY launch flow">
+          <div class="flight-line" aria-hidden="true"></div>
+          <img class="map-bird" src="images/1.png" loading="lazy" alt="">
+          <article class="stage stage-1"><em>01</em><b>Uniswap</b><span>The cage unlatches. Signal goes live.</span></article>
+          <article class="stage stage-2"><em>02</em><b>The crowd</b><span>One squawk becomes weather.</span></article>
+          <article class="stage stage-3"><em>03</em><b>Uniswap</b><span>Fresh Fuse. Different altitude.</span></article>
+          <article class="stage stage-4"><em>04</em><b>Dexscreener</b><span>Now the whole sky is watching.</span></article>
+        </div>
+        <div class="flow-counter"><span>01</span><small>/04 migration status</small></div>
+      </div>
+    </section>
+
+    <section class="chart-section" id="chart" aria-labelledby="chart-title">
+      <div class="chart-heading reveal-block">
+        <h2 id="chart-title">Live chart</h2>
+        <span class="live-badge">● Live / Terminal 004</span>
+      </div>
+      <div class="terminal-shell reveal-block">
+        <span class="screw s1" aria-hidden="true"></span><span class="screw s2" aria-hidden="true"></span><span class="screw s3" aria-hidden="true"></span><span class="screw s4" aria-hidden="true"></span>
+        <div class="terminal-top"><span>MERLOTT0_SGD / READ ONLY</span><span>feed: Robinhood / 0x21fa4911fdd187d72e84e0e9db13f00383229e7f</span></div>
+        <div class="terminal-screen">
+          <iframe src="https://dexscreener.com/robinhood/0x21fa4911fdd187d72e84e0e9db13f00383229e7f" width="100%" height="650" title="JOLLY live chart" loading="lazy"></iframe>
+        </div>
+      </div>
+      <div class="chart-controls">
+        <a class="dex-control interactive" href="https://dexscreener.com/robinhood/0x21fa4911fdd187d72e84e0e9db13f00383229e7f" target="_blank" rel="noopener noreferrer">Open full Dexscreener</a>
+        <p class="chart-note">Visual telemetry only. The Bot does not issue forecasts, promises, or useful financial advice.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="end-scene">
+    <div class="end-word" aria-hidden="true">JOLLY</div>
+    <a class="x-stamp interactive" href="https://x.com/JollyOnRBH" target="_blank" rel="noopener noreferrer" aria-label="Follow JOLLY on X">X / FOLLOW</a>
+    <p class="end-caption">File remains open.<br>The Bot remains unsupervised.</p>
+    <p class="footer-line">JOLLY / 2026<br>No promises. Just feathers.</p>
+  </footer>
+
+  <script>
+    (() => {
+      const root = document.documentElement;
+      const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const heroScene = document.querySelector('[data-scene="hero"]');
+      const aboutScene = document.querySelector('[data-scene="about"]');
+      const flowScene = document.querySelector('[data-scene="flow"]');
+      const heroWord = document.querySelector('.hero-word');
+      const heroPortrait = document.querySelector('.hero-portrait');
+      const heroGrid = document.querySelector('.hero-grid');
+      const evidence = document.querySelector('.evidence-photo');
+      const traits = [...document.querySelectorAll('.trait')];
+      const migrationMap = document.querySelector('.migration-map');
+      const skyPoster = document.querySelector('.sky-poster');
+      const flowCounter = document.querySelector('.flow-counter span');
+      let targetY = scrollY, smoothY = scrollY, ticking = false;
+
+      const clamp = (n, min = 0, max = 1) => Math.min(max, Math.max(min, n));
+      const progress = (el, y) => {
+        const start = el.offsetTop;
+        const distance = Math.max(1, el.offsetHeight - innerHeight);
+        return clamp((y - start) / distance);
+      };
+
+      function render() {
+        smoothY += (targetY - smoothY) * .11;
+        if (!reduceMotion) {
+          const hp = progress(heroScene, smoothY);
+          const ap = progress(aboutScene, smoothY);
+          const fp = progress(flowScene, smoothY);
+          heroWord.style.transform = `translateY(calc(-50% + ${hp * -8}vh)) scale(${.98 + hp * .21}) rotate(${hp * -2}deg)`;
+          const heroBaseX = innerWidth < 900 ? -45 : -38;
+          heroPortrait.style.transform = `translateX(${heroBaseX + hp * 3}%) translateY(${hp * -7}vh) scale(${1.03 + hp * .18})`;
+          heroPortrait.style.filter = `contrast(1.08) saturate(.85) drop-shadow(${28 + hp * 18}px ${28 + hp * 18}px 0 rgba(11,13,9,.24))`;
+          heroGrid.style.transform = `scale(${1.15 + hp * .18}) translateY(${hp * 3}%)`;
+
+          evidence.style.transform = `rotate(${2.8 - ap * 2}deg) translate3d(${ap * -3}vw, ${6 - ap * 12}%, 0) scale(${1 + ap * .08})`;
+          traits.forEach((trait, i) => trait.classList.toggle('on', ap > .18 + i * .14));
+
+          const travel = innerWidth < 900 ? 194 : 91;
+          migrationMap.style.transform = `translate3d(${-fp * travel}vw, ${Math.sin(fp * Math.PI) * -3}vh, 0)`;
+          skyPoster.style.transform = `scale(${1.06 + fp * .08}) translate3d(${fp * -2}%, ${fp * -2}%, 0)`;
+          flowCounter.textContent = String(Math.min(4, Math.floor(fp * 4) + 1)).padStart(2, '0');
+        }
+        if (Math.abs(targetY - smoothY) > .2) requestAnimationFrame(render);
+        else ticking = false;
+      }
+      addEventListener('scroll', () => {
+        targetY = scrollY;
+        if (!ticking) { ticking = true; requestAnimationFrame(render); }
+      }, {passive: true});
+      addEventListener('resize', () => { targetY = smoothY = scrollY; requestAnimationFrame(render); }, {passive: true});
+      requestAnimationFrame(render);
+
+      const revealObserver = new IntersectionObserver(entries => {
+        entries.forEach(entry => entry.target.classList.toggle('visible', entry.isIntersecting));
+      }, {threshold: .18});
+      document.querySelectorAll('.reveal-block').forEach(el => revealObserver.observe(el));
+
+      if (matchMedia('(pointer:fine)').matches) {
+        const dot = document.querySelector('.cursor-dot');
+        const ring = document.querySelector('.cursor-ring');
+        let mx = innerWidth / 2, my = innerHeight / 2, rx = mx, ry = my;
+        addEventListener('pointermove', e => { mx = e.clientX; my = e.clientY; dot.style.transform = `translate(${mx}px,${my}px) translate(-50%,-50%)`; });
+        const cursorLoop = () => {
+          rx += (mx - rx) * .18; ry += (my - ry) * .18;
+          ring.style.transform = `translate(${rx}px,${ry}px) translate(-50%,-50%)`;
+          requestAnimationFrame(cursorLoop);
+        };
+        cursorLoop();
+        document.querySelectorAll('a').forEach(el => {
+          el.addEventListener('mouseenter', () => document.body.classList.add('cursor-hover'));
+          el.addEventListener('mouseleave', () => document.body.classList.remove('cursor-hover'));
+        });
+      }
+    })();
+  </script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"97ee5a07a302466bac73a183b4c24699","r":1}' crossorigin="anonymous"></script>
+</body>
+</html>
